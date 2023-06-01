@@ -64,29 +64,38 @@ def berechne_gesamtstrecke(selected_cities):
 
 
 def berechne_kompakte_route(selected_cities, startpunkt, endpunkt):
-    alle_moeglichkeiten = list(permutations(selected_cities))
-    kompakteste_route = None
-    kuerzeste_strecke = float('inf')
+    unvisited_cities = set(selected_cities)
+    current_city = startpunkt
+    tour = [current_city]
+    unvisited_cities.remove(current_city)
 
-    for route in alle_moeglichkeiten:
-        # Überprüfen, ob die Reihenfolge der Städte mit Startpunkt und Endpunkt übereinstimmt
-        if route[0] == startpunkt and route[-1] == endpunkt:
-            gesamtstrecke = berechne_gesamtstrecke(route)
-            if gesamtstrecke < kuerzeste_strecke:
-                kuerzeste_strecke = gesamtstrecke
-                kompakteste_route = route
+    while unvisited_cities:
+        nearest_city = None
+        min_distance = float('inf')
 
-    return kompakteste_route
+        for city in unvisited_cities:
+            distanz = geodesic(stadt_koordinaten[current_city], stadt_koordinaten[city]).kilometers
+            if distanz < min_distance:
+                min_distance = distanz
+                nearest_city = city
 
+        tour.append(nearest_city)
+        current_city = nearest_city
+        unvisited_cities.remove(current_city)
+
+    # add the startpoint (which is also the endpoint) to the tour
+    tour.append(startpunkt)
+
+    return tour
 
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
     selected_cities = []
     startpunkt = ''
-    endpunkt = ''
     gesamtstrecke = 0.0
     kompakteste_route = []
+
     # Erstelle die Benutzeroberfläche direkt in Python-Code
     form = ''
 
@@ -94,68 +103,48 @@ def index():
         for stadt in bundeslaender.values():
             if request.form.get(stadt):
                 selected_cities.append(stadt)
-        startpunkt = request.form.get('startpunkt')
-        endpunkt = request.form.get('endpunkt')
+                startpunkt = stadt
 
-        # Überprüfen und Ausschließen der Start- und Endpunkte aus den Dropdown-Menüs
+        # Überprüfen und Ausschließen des Startpunkts aus den Dropdown-Menüs
         startpunkt_options = ''
-        endpunkt_options = ''
         for stadt in bundeslaender.values():
-            if stadt != endpunkt:
-                startpunkt_disabled = 'disabled' if stadt == endpunkt else ''
+            if stadt != startpunkt:
+                startpunkt_disabled = 'disabled' if stadt == startpunkt else ''
                 startpunkt_selected = 'selected' if stadt == startpunkt else ''
                 startpunkt_options += f'<option value="{stadt}" {startpunkt_selected} {startpunkt_disabled}>{stadt}</option>'
 
-            if stadt != startpunkt:
-                endpunkt_disabled = 'disabled' if stadt == startpunkt else ''
-                endpunkt_selected = 'selected' if stadt == endpunkt else ''
-                endpunkt_options += f'<option value="{stadt}" {endpunkt_selected} {endpunkt_disabled}>{stadt}</option>'
-
-        # Ersetzen der Dropdown-Menüs im Formular
+        # Ersetzen des Dropdown-Menüs im Formular
         form = form.replace('<select id="startpunkt" name="startpunkt">...</select>', startpunkt_options)
-        form = form.replace('<select id="endpunkt" name="endpunkt">...</select>', endpunkt_options)
 
         if 'berechnen' in request.form:
             if len(selected_cities) > 1:
-                selected_cities.insert(0, startpunkt)
-                selected_cities.append(endpunkt)
+                selected_cities.append(startpunkt)
                 gesamtstrecke = berechne_gesamtstrecke(selected_cities)
-                kompakteste_route = berechne_kompakte_route(selected_cities, startpunkt, endpunkt)
+                kompakteste_route = berechne_kompakte_route(selected_cities, startpunkt, startpunkt)
 
         if 'reset' in request.form:
             selected_cities = []
             startpunkt = ''
-            endpunkt = ''
             gesamtstrecke = 0.0
             kompakteste_route = []
 
     form = '<div class="checkbox-container">'
+    form += '<h1>Berechnen Sie Ihre Rundreise</h1>'
 
     for stadt in bundeslaender.values():
         checked = 'checked' if stadt in selected_cities else ''
-        disabled = 'disabled' if startpunkt == stadt or endpunkt == stadt else ''
+        disabled = 'disabled' if startpunkt == stadt else ''
         form += f'<label><input type="checkbox" class="checkbox" name="{stadt}" value="{stadt}" {checked} {disabled}>{stadt}</label>'
 
     form += '</div>'
-
     form += '<br>'
     form += '<label for="startpunkt">Startpunkt:</label>'
     form += '<select id="startpunkt" name="startpunkt">'
     for stadt in bundeslaender.values():
         selected = 'selected' if stadt == startpunkt else ''
-        disabled = 'disabled' if stadt == endpunkt else ''
-        form += f'<option value="{stadt}" {selected} {disabled}>{stadt}</option>'
-    form += '</select>'
-
-    form += '<br>'
-    form += '<label for="endpunkt">Endpunkt:</label>'
-    form += '<select id="endpunkt" name="endpunkt">'
-    for stadt in bundeslaender.values():
-        selected = 'selected' if stadt == endpunkt else ''
         disabled = 'disabled' if stadt == startpunkt else ''
         form += f'<option value="{stadt}" {selected} {disabled}>{stadt}</option>'
     form += '</select>'
-
     form += '<br>'
     form += '<button class="btn" type="submit" name="berechnen">Berechnen</button>'
     form += '<button class="btn" type="submit" name="reset">Zurücksetzen</button>'
@@ -216,32 +205,37 @@ def index():
             result += '</div>'
 
     return render_template_string(f'''
-        <html>
-        <head>
-            <title>Routenplaner für Außendienstmitarbeiter</title>
-            <style>
+<html>
+<head>
+<title>Routenplaner für Außendienstmitarbeiter</title>
+<style>
                 body {{
                     font-family: Arial, sans-serif;
                     margin: 20px;
                 }}
+
                 .checkbox-container {{
                     display: grid;
                     grid-template-columns: repeat(4, 1fr);
                     grid-gap: 5px;
                 }}
+
                 .checkbox {{
                     width: 16px;
                     height: 16px;
                     margin: 0;
                     padding: 0;
                 }}
+
                 label {{
                     display: flex;
                     align-items: center;
                 }}
+
                 h1 {{
                     color: #555555;
                 }}
+
                 .btn {{
                     background-color: #4CAF50;
                     border: none;
@@ -254,43 +248,50 @@ def index():
                     margin: 4px 2px;
                     cursor: pointer;
                 }}
+
                 .result-container {{
                     display: flex;
-                      grid-template-columns: 1fr 1fr;
-                      grid-gap: 10px; 
+                    grid-template-columns: 1fr 1fr;
+                    grid-gap: 10px; 
                 }}
+
                 .selected-cities, .compact-route {{
                     padding: 10px;
                 }}
-                .total-distance, .map-container{{
+
+                .total-distance, .map-container {{
                     grid-column: span 2;
                     padding: 10px;
                 }}
+
                 ol {{
                     padding-left: 20px;
                 }}
+
                 li {{
                     flex-basis: 25%;
                     margin-bottom: 10px;
                 }}
+
                 .map-container {{
                     grid-row: 2;
                     height: 500px;
                 }}
+
                 .error {{
                     flex-basis: 100%;
                     color: red;
                     padding: 10px;
                 }}
-            </style>
-        </head>
-        <body>
-            <form method="POST" action="/">
+</style>
+</head>
+<body>
+<form method="POST" action="/">
                 {form}
-            </form>
+</form>
             {result}
-        </body>
-        </html>
+</body>
+</html>
     ''')
 
 
