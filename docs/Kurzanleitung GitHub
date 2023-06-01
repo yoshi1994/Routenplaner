@@ -1,0 +1,46 @@
+Die folgende Anleitung wurde von ChatGPT generiert:
+
+Gerne! Hier ist eine kurze Anleitung, wie du pyCharm und GitHub in deiner täglichen Projektarbeit zusammen verwenden kannst:
+
+Schritt 1: Repository klonen
+- Öffne pyCharm und wähle "Checkout from Version Control" aus dem Startmenü oder dem "File" Menü.
+- Wähle "GitHub" aus den verfügbaren Optionen.
+- Gib die URL des GitHub-Repositories ein, das dein Kollege eingerichtet hat.
+- Wähle den gewünschten Speicherort auf deinem lokalen Computer aus und klicke auf "Clone".
+
+Schritt 2: Projekt öffnen
+- Sobald der Klonvorgang abgeschlossen ist, öffne das Projekt in pyCharm, indem du den entsprechenden Ordner auswählst.
+
+Schritt 3: Branch erstellen
+- Bevor du mit der Arbeit beginnst, erstelle einen eigenen Branch für deine Änderungen, um das Hauptprojekt nicht zu beeinträchtigen.
+- Klicke auf den Git-Button in der unteren rechten Ecke von pyCharm und wähle "New Branch" aus.
+- Gib einen Namen für deinen Branch ein und klicke auf "Create".
+
+Schritt 4: Änderungen vornehmen
+- Bearbeite den Code und füge deine gewünschten Änderungen hinzu.
+
+Schritt 5: Änderungen committen
+- Kehre zum Git-Tool zurück, indem du auf den Git-Button in der unteren rechten Ecke von pyCharm klickst.
+- Wähle die Dateien aus, die du committen möchtest.
+- Gib einen aussagekräftigen Commit-Beschreibungstext ein und klicke auf "Commit".
+
+Schritt 6: Branch pushen
+- Klicke erneut auf den Git-Button und wähle "Push" aus, um deine Änderungen auf den GitHub-Server hochzuladen.
+- Stelle sicher, dass dein eigener Branch ausgewählt ist und klicke auf "Push".
+
+Schritt 7: Pull Request erstellen
+- Gehe zum GitHub-Repository in deinem Webbrowser.
+- Klicke auf den "New Pull Request" Button.
+- Wähle deinen Branch als "compare branch" und den Hauptbranch als "base branch" aus.
+- Überprüfe deine Änderungen und gib eine Beschreibung für den Pull Request ein.
+- Klicke auf "Create Pull Request" und warte auf das Feedback deines Kollegen.
+
+Schritt 8: Änderungen aktualisieren
+- Wenn dein Kollege Feedback gibt und Änderungen anfordert, arbeite die Kommentare durch und führe die erforderlichen Anpassungen durch.
+- Commite und pushe die Aktualisierungen auf deinen Branch.
+
+Schritt 9: Pull Request überprüfen und zusammenführen
+- Dein Kollege wird deine aktualisierten Änderungen überprüfen und bei Bedarf erneut Feedback geben.
+- Sobald die Änderungen genehmigt sind, kann der Pull Request zusammengeführt werden.
+
+Das waren die grundlegenden Schritte, um pyCharm und GitHub in deiner täglichen Projektarbeit zu verwenden. Beachte jedoch, dass dies nur eine einfache Anleitung ist und dass es weitere fortgeschrittenere Funktionen und Workflows gibt, die du bei Bedarf erkunden kannst.
