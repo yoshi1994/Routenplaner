@@ -128,8 +128,8 @@ def index():
             gesamtstrecke = 0.0
             kompakteste_route = []
 
-    form = '<div class="checkbox-container">'
-    form += '<h1>Berechnen Sie Ihre Rundreise</h1>'
+    form = '<h1>Berechnen Sie Ihre Rundreise</h1>'
+    form += '<div class="checkbox-container">'
 
     for stadt in bundeslaender.values():
         checked = 'checked' if stadt in selected_cities else ''
