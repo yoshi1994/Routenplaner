@@ -103,7 +103,8 @@ def index():
         for stadt in bundeslaender.values():
             if request.form.get(stadt):
                 selected_cities.append(stadt)
-                startpunkt = stadt
+
+        startpunkt = request.form.get('startpunkt')
 
         # Überprüfen und Ausschließen des Startpunkts aus den Dropdown-Menüs
         startpunkt_options = ''
