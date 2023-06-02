@@ -1,9 +1,9 @@
 import os
-import webview
-from geopy.distance import geodesic
-from flask import Flask, request, render_template_string
+
 import folium
-from itertools import permutations
+import webview
+from flask import Flask, request, render_template_string
+from geopy.distance import geodesic
 
 app = Flask(__name__)
 
