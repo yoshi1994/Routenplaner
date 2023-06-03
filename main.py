@@ -134,6 +134,16 @@ def index():
     form += '<button class="btn" type="submit" name="reset">Zurücksetzen</button>'
     form += '<button class="btn" onclick="window.print()">Drucken</button>'
 
+     # Erstelle den Inhalt der E-Mail
+    subject = "Ausgewählte Städte und kompakte Route"
+    body = "Ausgewählte Städte: " + ', '.join(selected_cities) + " - "
+    body += "Kompakte Route: " + ' -> '.join(kompakteste_route)
+
+    # Erstelle den mailto-Link
+    mailto_link = f'mailto:?subject={subject}&body={body}'
+    # Füge den Link zum Formular hinzu
+    form += '<a class="btn" href="{}">Per E-Mail senden</a>'.format(mailto_link)
+
     result = ""
     if selected_cities:
         result += '<div class="result-container">'
@@ -270,6 +280,7 @@ def index():
                     padding: 10px;
                 }}
 </style>
+
 </head>
 <body>
 <form method="POST" action="/">
