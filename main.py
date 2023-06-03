@@ -1,55 +1,53 @@
 import os
-
 import folium
 import webview
-from flask import Flask, request, render_template_string
+from flask import Flask, request, render_template_string, session
 from geopy.distance import geodesic
 
 app = Flask(__name__)
 
 # Den Pfad zum Vorlagenverzeichnis festlegen
 template_dir = os.path.abspath(os.path.dirname(__file__))
-app.template_folder = os.path.join(template_dir, 'templates')
+app.template_folder = os.path.join(template_dir, "templates")
 
 # Liste der Bundeslandhauptstädte
 bundeslaender = {
-    'Baden-Württemberg': 'Stuttgart',
-    'Bayern': 'München',
-    'Berlin': 'Berlin',
-    'Brandenburg': 'Potsdam',
-    'Bremen': 'Bremen',
-    'Hamburg': 'Hamburg',
-    'Hessen': 'Wiesbaden',
-    'Mecklenburg-Vorpommern': 'Schwerin',
-    'Niedersachsen': 'Hannover',
-    'Nordrhein-Westfalen': 'Düsseldorf',
-    'Rheinland-Pfalz': 'Mainz',
-    'Saarland': 'Saarbrücken',
-    'Sachsen': 'Dresden',
-    'Sachsen-Anhalt': 'Magdeburg',
-    'Schleswig-Holstein': 'Kiel',
-    'Thüringen': 'Erfurt'
+    "Baden-Württemberg": "Stuttgart",
+    "Bayern": "München",
+    "Berlin": "Berlin",
+    "Brandenburg": "Potsdam",
+    "Bremen": "Bremen",
+    "Hamburg": "Hamburg",
+    "Hessen": "Wiesbaden",
+    "Mecklenburg-Vorpommern": "Schwerin",
+    "Niedersachsen": "Hannover",
+    "Nordrhein-Westfalen": "Düsseldorf",
+    "Rheinland-Pfalz": "Mainz",
+    "Saarland": "Saarbrücken",
+    "Sachsen": "Dresden",
+    "Sachsen-Anhalt": "Magdeburg",
+    "Schleswig-Holstein": "Kiel",
+    "Thüringen": "Erfurt",
 }
 
 stadt_koordinaten = {
-    'Stuttgart': (48.775846, 9.182932),
-    'München': (48.135125, 11.581981),
-    'Berlin': (52.520008, 13.404954),
-    'Potsdam': (52.390568, 13.064472),
-    'Bremen': (53.079296, 8.801694),
-    'Hamburg': (53.551086, 9.993682),
-    'Wiesbaden': (50.082729, 8.245584),
-    'Schwerin': (53.635502, 11.401249),
-    'Hannover': (52.375892, 9.732010),
-    'Düsseldorf': (51.227741, 6.773456),
-    'Mainz': (50.000000, 8.271000),
-    'Saarbrücken': (49.240000, 6.990000),
-    'Dresden': (51.050409, 13.737262),
-    'Magdeburg': (52.120533, 11.627624),
-    'Kiel': (54.322708, 10.135555),
-    'Erfurt': (50.978700, 11.032830)
+    "Stuttgart": (48.775846, 9.182932),
+    "München": (48.135125, 11.581981),
+    "Berlin": (52.520008, 13.404954),
+    "Potsdam": (52.390568, 13.064472),
+    "Bremen": (53.079296, 8.801694),
+    "Hamburg": (53.551086, 9.993682),
+    "Wiesbaden": (50.082729, 8.245584),
+    "Schwerin": (53.635502, 11.401249),
+    "Hannover": (52.375892, 9.732010),
+    "Düsseldorf": (51.227741, 6.773456),
+    "Mainz": (50.000000, 8.271000),
+    "Saarbrücken": (49.240000, 6.990000),
+    "Dresden": (51.050409, 13.737262),
+    "Magdeburg": (52.120533, 11.627624),
+    "Kiel": (54.322708, 10.135555),
+    "Erfurt": (50.978700, 11.032830),
 }
-
 
 def berechne_gesamtstrecke(selected_cities):
     gesamtstrecke = 0.0
@@ -62,19 +60,20 @@ def berechne_gesamtstrecke(selected_cities):
         gesamtstrecke += distanz
     return round(gesamtstrecke)
 
-
-def berechne_kompakte_route(selected_cities, startpunkt, endpunkt):
+def berechne_kompakte_route(selected_cities):
     unvisited_cities = set(selected_cities)
-    current_city = startpunkt
+    current_city = selected_cities[0]
     tour = [current_city]
     unvisited_cities.remove(current_city)
 
     while unvisited_cities:
         nearest_city = None
-        min_distance = float('inf')
+        min_distance = float("inf")
 
         for city in unvisited_cities:
-            distanz = geodesic(stadt_koordinaten[current_city], stadt_koordinaten[city]).kilometers
+            distanz = geodesic(
+                stadt_koordinaten[current_city], stadt_koordinaten[city]
+            ).kilometers
             if distanz < min_distance:
                 min_distance = distanz
                 nearest_city = city
@@ -83,95 +82,80 @@ def berechne_kompakte_route(selected_cities, startpunkt, endpunkt):
         current_city = nearest_city
         unvisited_cities.remove(current_city)
 
-    # add the startpoint (which is also the endpoint) to the tour
-    tour.append(startpunkt)
+    # Füge die erste Stadt am Ende der Route hinzu
+    tour.append(selected_cities[0])
 
     return tour
 
-
-@app.route('/', methods=['GET', 'POST'])
+@app.route("/", methods=["GET", "POST"])
 def index():
     selected_cities = []
-    startpunkt = ''
     gesamtstrecke = 0.0
     kompakteste_route = []
 
     # Erstelle die Benutzeroberfläche direkt in Python-Code
-    form = ''
+    form = ""
 
-    if request.method == 'POST':
+    if request.method == "POST":
         for stadt in bundeslaender.values():
             if request.form.get(stadt):
                 selected_cities.append(stadt)
+        #Eingefügt, weil sonst nach dem Drucken die Werte weg sind
+        #Das konnte ich auf andere Weise auch mit ChatGPT nicht beheben
+        if len(selected_cities) > 1:
+            kompakteste_route = berechne_kompakte_route(selected_cities)
+            gesamtstrecke = berechne_gesamtstrecke(kompakteste_route)
 
-        startpunkt = request.form.get('startpunkt')
-
-        # Überprüfen und Ausschließen des Startpunkts aus den Dropdown-Menüs
-        startpunkt_options = ''
-        for stadt in bundeslaender.values():
-            if stadt != startpunkt:
-                startpunkt_disabled = 'disabled' if stadt == startpunkt else ''
-                startpunkt_selected = 'selected' if stadt == startpunkt else ''
-                startpunkt_options += f'<option value="{stadt}" {startpunkt_selected} {startpunkt_disabled}>{stadt}</option>'
-
-        # Ersetzen des Dropdown-Menüs im Formular
-        form = form.replace('<select id="startpunkt" name="startpunkt">...</select>', startpunkt_options)
-
-        if 'berechnen' in request.form:
+        if "berechnen" in request.form:
             if len(selected_cities) > 1:
-                selected_cities.append(startpunkt)
-                gesamtstrecke = berechne_gesamtstrecke(selected_cities)
-                kompakteste_route = berechne_kompakte_route(selected_cities, startpunkt, startpunkt)
+                kompakteste_route = berechne_kompakte_route(selected_cities)
+                gesamtstrecke = berechne_gesamtstrecke(kompakteste_route)
 
-        if 'reset' in request.form:
+        if "reset" in request.form:
             selected_cities = []
-            startpunkt = ''
             gesamtstrecke = 0.0
             kompakteste_route = []
 
-    form = '<h1>Berechnen Sie Ihre Rundreise</h1>'
+        #Zum Debuggen
+        #print("POST request")
+        #print("Selected cities:", selected_cities)
+        #print("Compact route:", kompakteste_route)
+
+    form = "<h1>Berechnen Sie Ihre Rundreise</h1>"
     form += '<div class="checkbox-container">'
 
     for stadt in bundeslaender.values():
-        checked = 'checked' if stadt in selected_cities else ''
-        disabled = 'disabled' if startpunkt == stadt else ''
-        form += f'<label><input type="checkbox" class="checkbox" name="{stadt}" value="{stadt}" {checked} {disabled}>{stadt}</label>'
+        checked = "checked" if stadt in selected_cities else ""
+        form += f'<label><input type="checkbox" class="checkbox" name="{stadt}" value="{stadt}" {checked}>{stadt}</label>'
 
-    form += '</div>'
-    form += '<br>'
-    form += '<label for="startpunkt">Startpunkt:</label>'
-    form += '<select id="startpunkt" name="startpunkt">'
-    for stadt in bundeslaender.values():
-        selected = 'selected' if stadt == startpunkt else ''
-        disabled = 'disabled' if stadt == startpunkt else ''
-        form += f'<option value="{stadt}" {selected} {disabled}>{stadt}</option>'
-    form += '</select>'
-    form += '<br>'
+    form += "</div>"
+    form += "<br>"
     form += '<button class="btn" type="submit" name="berechnen">Berechnen</button>'
     form += '<button class="btn" type="submit" name="reset">Zurücksetzen</button>'
+    form += '<button class="btn" onclick="window.print()">Drucken</button>'
 
-    result = ''
+    result = ""
     if selected_cities:
         result += '<div class="result-container">'
         result += '<div class="selected-cities">'
-        result += '<h2>Ausgewählte Städte:</h2>'
-        result += '<ol>'
+        result += "<h2>Ausgewählte Städte:</h2>"
+        result += "<ol>"
         for city in selected_cities:
-            result += f'<li>{city}</li>'
-        result += '</ol>'
-        result += '</div>'
+            result += f"<li>{city}</li>"
+        result += "</ol>"
+        result += "</div>"
 
         if len(selected_cities) > 1:
             if kompakteste_route:
                 result += '<div class="compact-route">'
-                result += '<h2>Kompakte Route:</h2>'
-                result += '<ol>'
+                result += "<h2>Kompakte Route:</h2>"
+                result += "<ol>"
                 for city in kompakteste_route:
-                    result += f'<li>{city}</li>'
-                result += '</ol>'
-                result += '</div>'
+                    result += f"<li>{city}</li>"
+                result += "</ol>"
+                result += "</div>"
 
-        result += '</div>'
+        result += "</div>"
 
         if len(selected_cities) > 1 and kompakteste_route:
             # Erstelle eine Karte mit den ausgewählten Städten und der kompaktesten Route
@@ -181,31 +165,32 @@ def index():
                 folium.Marker(
                     location=stadt_koordinaten[city],
                     popup=city,
-                    icon=folium.Icon(color='blue')
+                    icon=folium.Icon(color="blue"),
                 ).add_to(karte)
 
             folium.PolyLine(
                 locations=[stadt_koordinaten[city] for city in kompakteste_route],
-                color='red',
+                color="red",
                 weight=2.5,
-                opacity=1
+                opacity=1,
             ).add_to(karte)
 
             # Füge die HTML-Representation der Karte zur Ergebnis-Ausgabe hinzu
             result += '<div class="map-container">'
             result += '<div class="total-distance">'
-            result += f'<h2>Gesamtstrecke: {gesamtstrecke} km</h2>'
-            result += '</div>'
+            result += f"<h2>Gesamtstrecke: {gesamtstrecke} km</h2>"
+            result += "</div>"
             result += '<div class="map">'
             result += karte._repr_html_()
-            result += '</div>'
-            result += '</div>'
+            result += "</div>"
+            result += "</div>"
         else:
             result += '<div class="error">'
-            result += f'<p>Bitte mindestens 2 Städte auswählen, um eine Strecke zu berechnen.</p>'
-            result += '</div>'
+            result += f"<p>Bitte mindestens 2 Städte auswählen, um eine Strecke zu berechnen.</p>"
+            result += "</div>"
 
-    return render_template_string(f'''
+    return render_template_string(
+        f"""
 <html>
 <head>
 <title>Routenplaner für Außendienstmitarbeiter</title>
@@ -293,9 +278,11 @@ def index():
             {result}
 </body>
 </html>
-    ''')
+    """
+    )
 
-
-if __name__ == '__main__':
-    window = webview.create_window('Routenplaner für Außendienstmitarbeiter', app, width=1000, height=1000)
+if __name__ == "__main__":
+    window = webview.create_window(
+        "Routenplaner für Außendienstmitarbeiter", app, width=1000, height=1000
+    )
     webview.start()
