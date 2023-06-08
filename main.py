@@ -87,11 +87,24 @@ def berechne_kompakte_route(selected_cities):
 
     return tour
 
+def berechne_entfernung(stadt1, stadt2):
+    koordinaten1 = stadt_koordinaten[stadt1]
+    koordinaten2 = stadt_koordinaten[stadt2]
+    distanz = geodesic(koordinaten1, koordinaten2).kilometers
+    return round(distanz,2)
+
+
+def berechne_dauer(stadt1, stadt2):
+    entfernung = berechne_entfernung(stadt1, stadt2)
+    dauer = entfernung / 100 # Annahme: Durchschnittsgeschwindigkeit von 100 km/h
+    return round(dauer,2)
+
 @app.route("/", methods=["GET", "POST"])
 def index():
     selected_cities = []
     gesamtstrecke = 0.0
     kompakteste_route = []
+    gesamtdauer = 0.0
 
     # Erstelle die Benutzeroberfläche direkt in Python-Code
     form = ""
@@ -105,16 +118,19 @@ def index():
         if len(selected_cities) > 1:
             kompakteste_route = berechne_kompakte_route(selected_cities)
             gesamtstrecke = berechne_gesamtstrecke(kompakteste_route)
+            gesamtdauer = sum([berechne_dauer(kompakteste_route[i], kompakteste_route[i+1]) for i in range(len(kompakteste_route)-1)])
 
         if "berechnen" in request.form:
             if len(selected_cities) > 1:
                 kompakteste_route = berechne_kompakte_route(selected_cities)
                 gesamtstrecke = berechne_gesamtstrecke(kompakteste_route)
+                gesamtdauer = sum([berechne_dauer(kompakteste_route[i], kompakteste_route[i+1]) for i in range(len(kompakteste_route)-1)])
 
         if "reset" in request.form:
             selected_cities = []
             gesamtstrecke = 0.0
             kompakteste_route = []
+            gesamtdauer = 0.0
 
         #Zum Debuggen
         #print("POST request")
@@ -160,8 +176,15 @@ def index():
                 result += '<div class="compact-route">'
                 result += "<h2>Kompakte Route:</h2>"
                 result += "<ol>"
-                for city in kompakteste_route:
-                    result += f"<li>{city}</li>"
+                for i in range(len(kompakteste_route)):
+                    city = kompakteste_route[i]
+                    result += f"<li>{city}"
+                    if i > 0:
+                        dauer = berechne_dauer(kompakteste_route[i - 1], city)
+                        stunden = int(dauer)
+                        minuten = int((dauer - stunden) * 60)
+                        result += f" - Dauer: {stunden:02d}:{minuten:02d} (Std:Min)"
+                    result += "</li>"
                 result += "</ol>"
                 result += "</div>"
 
@@ -169,7 +192,7 @@ def index():
 
         if len(selected_cities) > 1 and kompakteste_route:
             # Erstelle eine Karte mit den ausgewählten Städten und der kompaktesten Route
-            karte = folium.Map(location=[51.1657, 10.4515], zoom_start=5)
+            karte = folium.Map()
 
             for city in selected_cities:
                 folium.Marker(
@@ -185,15 +208,22 @@ def index():
                 opacity=1,
             ).add_to(karte)
 
+            # Passe die Karte an die Grenzen der Route an
+            karte.fit_bounds([stadt_koordinaten[city] for city in kompakteste_route])
+
             # Füge die HTML-Representation der Karte zur Ergebnis-Ausgabe hinzu
             result += '<div class="map-container">'
             result += '<div class="total-distance">'
-            result += f"<h2>Gesamtstrecke: {gesamtstrecke} km</h2>"
+            result += f'<div class="distance"><h2>Gesamtstrecke: {gesamtstrecke} km</h2></div>'
+            stunden = int(gesamtdauer)
+            minuten = int((gesamtdauer - stunden) * 60)
+            result += f"<h2>Gesamtdauer: {stunden:02d}:{minuten:02d} (Std:Min)</h2>"
             result += "</div>"
             result += '<div class="map">'
             result += karte._repr_html_()
             result += "</div>"
             result += "</div>"
+
         else:
             result += '<div class="error">'
             result += f"<p>Bitte mindestens 2 Städte auswählen, um eine Strecke zu berechnen.</p>"
@@ -205,6 +235,13 @@ def index():
 <head>
 <title>Routenplaner für Außendienstmitarbeiter</title>
 <style>
+                @media print {{
+                    @page {{
+                            size: landscape;
+                    }}
+                    /* Hier können Sie weitere CSS-Regeln hinzufügen, um das Layout der Seite für den Druck im Querformat anzupassen */
+                }}
+                
                 body {{
                     font-family: Arial, sans-serif;
                     margin: 20px;
@@ -278,6 +315,14 @@ def index():
                     flex-basis: 100%;
                     color: red;
                     padding: 10px;
+                }}
+                
+                .total-distance {{
+                    display: flex;
+                }}
+
+                .distance, .duration {{
+                    margin-right: 20px;
                 }}
 </style>
 
