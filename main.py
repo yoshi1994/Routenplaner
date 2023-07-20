@@ -99,6 +99,12 @@ def berechne_dauer(stadt1, stadt2):
     dauer = entfernung / 100 # Annahme: Durchschnittsgeschwindigkeit von 100 km/h
     return round(dauer,2)
 
+def create_dropdown_options(selected_cities):
+    options = ""
+    for city in selected_cities:
+        options += f'<option value="{city}">{city}</option>'
+    return options
+
 @app.route("/", methods=["GET", "POST"])
 def index():
     selected_cities = []
@@ -149,6 +155,12 @@ def index():
     form += '<button class="btn" type="submit" name="berechnen">Berechnen</button>'
     form += '<button class="btn" type="submit" name="reset">Zurücksetzen</button>'
     form += '<button class="btn" onclick="window.print()">Drucken</button>'
+
+    # Erstelle das Dropdown-Feld, wenn Städte ausgewählt sind
+    if selected_cities:
+        dropdown_options = create_dropdown_options(selected_cities)
+        form += f'<select name="selected_city">{dropdown_options}</select>'
+        form += '<button class="btn" type="submit" name="show_on_map">Auf Karte anzeigen</button>'
 
      # Erstelle den Inhalt der E-Mail
     subject = "Ausgewählte Städte und kompakte Route"
