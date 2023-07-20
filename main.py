@@ -148,7 +148,7 @@ def index():
 
     for stadt in bundeslaender.values():
         checked = "checked" if stadt in selected_cities else ""
-        form += f'<label><input type="checkbox" class="checkbox" name="{stadt}" value="{stadt}" {checked}>{stadt}</label>'
+        form += f'<label><input type="checkbox" class="checkbox" name="{stadt}" value="{stadt}" {checked} onClick="updateDropdown()">{stadt}</label>'
 
     form += "</div>"
     form += "<br>"
@@ -158,7 +158,7 @@ def index():
 
     # Dropdown-Feld mit den ausgewählten Städten immer anzeigen
     dropdown_options = create_dropdown_options(selected_cities)
-    form += f'<select name="selected_city">{dropdown_options}</select>'
+    form += f'<select name="selected_city" id="selected_city">{dropdown_options}</select>'
     form += '<button class="btn" type="submit" name="show_on_map">Auf Karte anzeigen</button>'
 
     # Erstelle das Dropdown-Feld, wenn Städte ausgewählt sind
@@ -342,7 +342,26 @@ def index():
                     margin-right: 20px;
                 }}
 </style>
+<script>
+    function updateDropdown() {{
+        var checkboxes = document.getElementsByClassName('checkbox');
+        var selected_cities = [];
+        for (var i = 0; i < checkboxes.length; i++) {{
+            if (checkboxes[i].checked) {{
+                selected_cities.push(checkboxes[i].value);
+            }}
+        }}
 
+        var dropdown = document.getElementById('selected_city');
+        dropdown.innerHTML = '';
+        for (var i = 0; i < selected_cities.length; i++) {{
+            var option = document.createElement('option');
+            option.value = selected_cities[i];
+            option.text = selected_cities[i];
+            dropdown.add(option);
+        }}
+    }}
+</script>
 </head>
 <body>
 <form method="POST" action="/">
