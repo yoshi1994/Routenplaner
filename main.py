@@ -156,6 +156,11 @@ def index():
     form += '<button class="btn" type="submit" name="reset">Zurücksetzen</button>'
     form += '<button class="btn" onclick="window.print()">Drucken</button>'
 
+    # Dropdown-Feld mit den ausgewählten Städten immer anzeigen
+    dropdown_options = create_dropdown_options(selected_cities)
+    form += f'<select name="selected_city">{dropdown_options}</select>'
+    form += '<button class="btn" type="submit" name="show_on_map">Auf Karte anzeigen</button>'
+
     # Erstelle das Dropdown-Feld, wenn Städte ausgewählt sind
     if selected_cities:
         dropdown_options = create_dropdown_options(selected_cities)
